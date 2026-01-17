@@ -1,4 +1,6 @@
-﻿categoria,producto,unidad,precio,disponible
-Fruta,Limón,un,2000,si
+﻿categoria,producto,precio,unidad,disponible
+Fruta,Limón,2000,un,si
+
+
 
 
