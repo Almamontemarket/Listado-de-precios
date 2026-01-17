@@ -82,7 +82,6 @@
   Papa.parse(CSV_URL, {
     download: true,
     header: true,
-    delimiter: ";",
     skipEmptyLines: true,
     complete: (results) => render(results.data),
     error: (err) => {
