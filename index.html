@@ -7,89 +7,36 @@
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
+
 <body>
   <header class="hero">
-    <h1>Lista de precios</h1>
-    <p class="sub">Actualizado automáticamente</p>
+    <div class="hero__inner">
+      <h1>Lista de precios</h1>
+      <p class="sub">Actualizado automáticamente desde Google Sheets</p>
+
+      <div class="controls">
+        <input id="buscador" type="search" placeholder="Buscar producto..." autocomplete="off" />
+        <label class="chip">
+          <input id="toggleNoStock" type="checkbox" />
+          Mostrar NO disponibles
+        </label>
+      </div>
+
+      <div class="meta">
+        <span id="count"></span>
+        <span id="updated"></span>
+      </div>
+    </div>
   </header>
 
-  <main id="contenedor"></main>
+  <main class="wrap">
+    <div id="contenedor" class="menu"></div>
+  </main>
 
   <footer class="foot">
     <small>Precios referenciales. Sujetos a stock.</small>
   </footer>
 
-<script>
-  // Pega aquí tu link directo al CSV (Paso 2)
-  const CSV_URL = https://docs.google.com/spreadsheets/d/e/2PACX-1vRot1AcxBJqPKUFTIHwKbMa7Bf_Z9p2QzgEBy5uBzo2-uCxKci8cmy0NuYJRbS980YkH3IR9Lnrm1nI/pub?gid=0&single=true&output=csv;
-
-  function formatoCLP(n) {
-    const v = Number(n);
-    if (!Number.isFinite(v)) return n;
-    return v.toLocaleString("es-CL");
-  }
-
-  function render(data) {
-    // Normaliza + filtra
-    const filas = data
-      .map(r => ({
-        categoria: (r.categoria || "").trim(),
-        producto: (r.producto || "").trim(),
-        unidad: (r.unidad || "").trim(),
-        precio: (r.precio || "").toString().replace(/\./g,"").replace(/,/g,"").trim(),
-        disponible: (r.disponible || "SI").trim().toUpperCase(),
-      }))
-      .filter(r => r.categoria && r.producto && r.disponible !== "NO");
-
-    // Agrupa por categoría
-    const porCat = new Map();
-    for (const f of filas) {
-      if (!porCat.has(f.categoria)) porCat.set(f.categoria, []);
-      porCat.get(f.categoria).push(f);
-    }
-
-    // Render
-    const cont = document.getElementById("contenedor");
-    cont.innerHTML = "";
-
-    for (const [cat, items] of porCat.entries()) {
-      const sec = document.createElement("section");
-      sec.className = "card";
-
-      const h = document.createElement("h2");
-      h.textContent = cat;
-      sec.appendChild(h);
-
-      const ul = document.createElement("ul");
-      ul.className = "lista";
-
-      for (const it of items) {
-        const li = document.createElement("li");
-        li.className = "fila";
-        li.innerHTML = `
-          <span class="prod">${it.producto}</span>
-          <span class="dots"></span>
-          <span class="price">$ ${formatoCLP(it.precio)}${it.unidad ? " / " + it.unidad : ""}</span>
-        `;
-        ul.appendChild(li);
-      }
-
-      sec.appendChild(ul);
-      cont.appendChild(sec);
-    }
-  }
-
-  Papa.parse(CSV_URL, {
-    download: true,
-    header: true,
-    skipEmptyLines: true,
-    complete: (results) => render(results.data),
-    error: (err) => {
-      document.getElementById("contenedor").innerHTML =
-        "<div class='error'>No se pudo cargar la lista. (Bloqueo del link o permisos)</div>";
-      console.error(err);
-    }
-  });
-</script>
+  <script src="app.js"></script>
 </body>
 </html>
