@@ -29,7 +29,7 @@ body::before{
   content:"";
   position: fixed;
   inset: 0;
-  background-image: url(assets/eab2fa12cc3b3fc06cd517f35722e04b907cfa54_shutterstock_181811207-2400x1600.webp);
+  background-image: url("assets/eab2fa12cc3b3fc06cd517f35722e04b907cfa54_shutterstock_181811207-2400x1600.webp");
   background-size: cover;
   background-position: center;
   filter: blur(16px);
