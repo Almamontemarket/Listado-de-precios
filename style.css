@@ -390,3 +390,23 @@ h1{
   padding: 18px 16px 28px;
   color: var(--muted);
 }
+
+.footerSocial{
+  display:flex;
+  justify-content:center;
+  gap:18px;
+  margin-bottom:12px;
+}
+
+.footerSocial img{
+  width:28px;
+  height:28px;
+  opacity:.75;
+  transition: opacity .2s ease, transform .2s ease;
+}
+
+.footerSocial a:hover img{
+  opacity:1;
+  transform: scale(1.1);
+}
+
