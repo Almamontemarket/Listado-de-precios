@@ -25,6 +25,7 @@
           <p class="sub">Actualizado automáticamente desde Google Sheets</p>
         </div>
 
+        <!-- Logo circular a la derecha -->
         <div class="heroRight">
           <img class="heroLogo" src="logo.png" alt="AlmaMontemarket" />
         </div>
@@ -32,10 +33,26 @@
 
       <div class="controls">
         <input id="buscador" type="search" placeholder="Buscar producto..." autocomplete="off" />
-        <label class="chip">
-          <input id="toggleNoStock" type="checkbox" />
-          Mostrar NO disponibles
-        </label>
+
+        <!-- Bloque derecho: redes + toggle -->
+        <div class="rightActions">
+          <div class="headerSocial">
+            <a class="hsLink" href="AQUI_TU_LINK_INSTAGRAM" target="_blank" aria-label="Instagram">
+              <img class="hsIcon" src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/instagram.svg" alt="Instagram">
+              <span>Síguenos en Instagram</span>
+            </a>
+
+            <a class="hsLink" href="https://wa.me/569XXXXXXXX" target="_blank" aria-label="WhatsApp">
+              <img class="hsIcon" src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/whatsapp.svg" alt="WhatsApp">
+              <span>Escríbenos WhatsApp</span>
+            </a>
+          </div>
+
+          <label class="chip chipToggle">
+            <input id="toggleNoStock" type="checkbox" />
+            Mostrar NO disponibles
+          </label>
+        </div>
       </div>
 
       <div class="meta">
@@ -63,18 +80,15 @@
 
   <footer class="foot">
     <div class="footerSocial">
-      <a href="https://wa.link/88ri6r" target="_blank" aria-label="WhatsApp">
+      <a href="https://wa.me/569XXXXXXXX" target="_blank" aria-label="WhatsApp">
         <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/whatsapp.svg" alt="WhatsApp">
       </a>
-
-      <a href="https://www.instagram.com/almamontemarket/" target="_blank" aria-label="Instagram">
+      <a href="AQUI_TU_LINK_INSTAGRAM" target="_blank" aria-label="Instagram">
         <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/instagram.svg" alt="Instagram">
       </a>
     </div>
-
     <small>Precios referenciales. Sujetos a stock.</small>
   </footer>
-
 
   <script src="app.js"></script>
 </body>
