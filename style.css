@@ -126,11 +126,10 @@ body::after{
 .heroRight{
   order: 0;
   flex: 0 0 auto;
-  margin-right: 6px;
   display:flex;
   align-items:center;
   justify-content:flex-start;
-  margin-left: 0;
+  margin: 0;
 }
 
 /* Texto a la derecha */
@@ -159,32 +158,39 @@ body::after{
   font-size: 18px;
   margin: 0 0 6px;
 }
-
 h1{
   margin:0 0 6px;
   font-size: clamp(22px, 3vw, 34px);
   letter-spacing:.2px;
 }
-
 .sub{
   margin:0;
   color: var(--muted);
   font-size:14px;
 }
 
-/* ===== Controles ===== */
+/* ===== Controles =====
+   Queremos:
+   Fila 1: [buscador] [toggle]
+   Fila 2: [RRSS .........] [RRSS]  (justo debajo del toggle, alineado a la derecha)
+*/
 .controls{
   display:grid;
-  grid-template-columns: 1fr auto; /* buscador | bloque derecho */
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "search toggle"
+    ".      social";
   gap: 10px;
-  align-items:center;
+  align-items: center;
   margin-top: 10px;
 }
 
 #buscador{
+  grid-area: search;
   width: 100%;
-  min-width: 280px;
-  padding:12px 12px;
+  min-width: 0;              /* clave para que pueda achicarse */
+  height: 44px;
+  padding: 0 12px;
   border-radius:14px;
   border:1px solid var(--border);
   background: rgba(255,255,255,0.96);
@@ -192,21 +198,26 @@ h1{
 }
 #buscador::placeholder{color: rgba(15,23,42,.45)}
 
-/* bloque derecho (RRSS + toggle) */
+/* bloque derecho: NO lo usamos como columna, lo convertimos en contenedor “de posición” */
 .rightActions{
-  display:flex;
-  flex-direction:column;
-  align-items:flex-end;
-  gap:8px;
-  flex: 0 0 auto;
+  display: contents;          /* permite ubicar hijos por grid-area sin wrapper raro */
 }
 
-/* RRSS */
+/* toggle */
+.chipToggle{
+  grid-area: toggle;
+  justify-self: end;
+}
+
+/* RRSS debajo del toggle */
 .headerSocial{
+  grid-area: social;
+  justify-self: end;
   display:flex;
   gap:10px;
   flex-wrap:wrap;
   justify-content:flex-end;
+  align-items:center;
 }
 
 .hsLink{
@@ -221,8 +232,8 @@ h1{
   background: rgba(255,255,255,0.90);
   border: 1px solid rgba(15,23,42,.08);
   line-height: 1;
+  white-space: nowrap;
 }
-
 .hsIcon{
   width: 14px;
   height: 14px;
@@ -232,10 +243,11 @@ h1{
 
 /* chip */
 .chip{
+  height: 44px;
   display:inline-flex;
   align-items:center;
   gap:8px;
-  padding:10px 12px;
+  padding:0 12px;
   border:1px solid var(--border);
   border-radius:999px;
   background: rgba(255,255,255,0.96);
@@ -244,7 +256,6 @@ h1{
   user-select:none;
   line-height:1;
 }
-.chipToggle{ align-self:flex-end; }
 
 /* meta */
 .meta{
@@ -316,12 +327,13 @@ h1{
 
 .item__top{
   display:flex;
-  align-items:center;
+  align-items:flex-start;      /* mejora cuando el nombre ocupa 2 líneas */
   justify-content:space-between;
   gap:10px;
 }
 
 /* Nombre en 2 líneas (evita que el precio se salga) */
+.item__top > div:first-child{ min-width: 0; }  /* clave para truncado/clamp */
 .item__name{
   font-weight:750;
   white-space: normal;
@@ -332,7 +344,6 @@ h1{
   line-height: 1.15;
   max-width: none;
 }
-.item__top > div:first-child{ min-width: 0; }
 
 .item__unit{
   font-size: 12px;
@@ -342,6 +353,7 @@ h1{
 .item__price{
   font-weight: 800;
   white-space:nowrap;
+  flex: 0 0 auto;
 }
 .item__price small{
   font-weight: 600;
@@ -468,30 +480,18 @@ h1{
   .heroTop{ align-items:flex-start; }
   .heroLogo{ width: 68px; height: 68px; padding: 7px; }
 
-  /* CLAVE: buscador + toggle en una línea */
+  /* buscador + toggle en una línea, RRSS abajo */
   .controls{
     grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "search toggle"
+      ".      social";
     gap: 8px;
     align-items:center;
   }
 
-  /* buscador más chico para que quepa */
-  #buscador{
-    min-width: 0;
-    padding: 10px 10px;
-  }
-
-  /* Reordenar: primero toggle, luego RRSS abajo */
-  .rightActions{
-    align-items:flex-end;
-    gap: 8px;
-  }
-  .rightActions .chipToggle{ order: 0; }
-  .rightActions .headerSocial{ order: 1; }
-
   /* RRSS más compactas en móvil */
   .headerSocial{
-    justify-content:flex-end;
     gap: 8px;
   }
   .hsLink{
