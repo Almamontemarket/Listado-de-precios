@@ -15,7 +15,7 @@ const elBackdrop = document.getElementById("backdrop");
 const elCloseNav = document.getElementById("closeNav");
 
 let RAW = [];
-let selectedCats = new Set(); // categorías seleccionadas (multi)
+let selectedCats = new Set();
 
 function normText(s){
   return (s ?? "").toString().trim();
@@ -61,30 +61,31 @@ function slugify(str){
 }
 
 /* =========================
-   Drawer open/close
+   Drawer open/close/toggle
 ========================= */
+function isNavOpen(){
+  return !!elSidenav?.classList.contains("is-open");
+}
+
 function openNav(){
   if (!elSidenav) return;
   elSidenav.classList.add("is-open");
   elSidenav.setAttribute("aria-hidden", "false");
-  if (elBackdrop){
-    elBackdrop.hidden = false;
-  }
-  if (elMenuBtn){
-    elMenuBtn.setAttribute("aria-expanded", "true");
-  }
+  if (elBackdrop) elBackdrop.hidden = false;
+  if (elMenuBtn) elMenuBtn.setAttribute("aria-expanded", "true");
 }
 
 function closeNav(){
   if (!elSidenav) return;
   elSidenav.classList.remove("is-open");
   elSidenav.setAttribute("aria-hidden", "true");
-  if (elBackdrop){
-    elBackdrop.hidden = true;
-  }
-  if (elMenuBtn){
-    elMenuBtn.setAttribute("aria-expanded", "false");
-  }
+  if (elBackdrop) elBackdrop.hidden = true;
+  if (elMenuBtn) elMenuBtn.setAttribute("aria-expanded", "false");
+}
+
+function toggleNav(){
+  if (isNavOpen()) closeNav();
+  else openNav();
 }
 
 /* =========================
@@ -94,7 +95,6 @@ function buildSideNavFromRows(rowsForNav){
   if (!elNavCats) return;
 
   const grouped = groupByCategoria(rowsForNav);
-
   elNavCats.innerHTML = "";
 
   for (const [cat, items] of grouped){
@@ -116,7 +116,7 @@ function buildSideNavFromRows(rowsForNav){
     chk.addEventListener("change", () => {
       if (chk.checked) selectedCats.add(cat);
       else selectedCats.delete(cat);
-      render(); // re-render con filtro de categorías
+      render();
     });
 
     const name = document.createElement("div");
@@ -145,8 +145,7 @@ function filterSideNav(){
 
   for (const c of cats){
     const catName = c.dataset.cat || "";
-    const ok = !q || catName.includes(q);
-    c.style.display = ok ? "" : "none";
+    c.style.display = (!q || catName.includes(q)) ? "" : "none";
   }
 }
 
@@ -157,25 +156,21 @@ function render(){
   const q = normText(elBuscador?.value).toLowerCase();
   const showNo = !!elToggleNo?.checked;
 
-  // 1) filtros base (disponibilidad + búsqueda)
   let rows = RAW
     .filter(r => r.categoria && r.producto)
     .filter(r => showNo ? true : r.disponibilidad !== "NO")
     .filter(r => !q ? true : (r.producto.toLowerCase().includes(q)));
 
-  // 2) filtro por categorías seleccionadas (multi)
   if (selectedCats.size > 0){
     rows = rows.filter(r => selectedCats.has(r.categoria));
   }
 
-  // 3) agrupación y métricas
   const grouped = groupByCategoria(rows);
   const totalItems = rows.length;
   const totalCats = grouped.length;
 
   if (elCount) elCount.textContent = `${totalCats} categorías · ${totalItems} productos`;
 
-  // 4) pintar contenedor
   elContenedor.innerHTML = "";
 
   if (grouped.length === 0){
@@ -184,7 +179,7 @@ function render(){
         <div class="section__head"><h3 class="section__title">Sin resultados</h3></div>
         <div style="padding:16px;color:var(--muted)">Prueba con otra búsqueda, cambia categorías o muestra NO disponibles.</div>
       </div>`;
-    // Mantén el drawer usable: lista categorías basada en filas sin filtro de categoría (para que puedas “salir” del filtro)
+
     const rowsForNav = RAW
       .filter(r => r.categoria && r.producto)
       .filter(r => showNo ? true : r.disponibilidad !== "NO");
@@ -255,7 +250,6 @@ function render(){
     elContenedor.appendChild(section);
   }
 
-  // Side nav: categorías basadas en lo que se puede mostrar sin filtro de categorías (pero respetando toggle NO)
   const rowsForNav = RAW
     .filter(r => r.categoria && r.producto)
     .filter(r => showNo ? true : r.disponibilidad !== "NO");
@@ -308,7 +302,7 @@ elBuscador?.addEventListener("input", render);
 elToggleNo?.addEventListener("change", render);
 elNavSearch?.addEventListener("input", filterSideNav);
 
-elMenuBtn?.addEventListener("click", openNav);
+elMenuBtn?.addEventListener("click", toggleNav);  // AHORA abre/cierra
 elCloseNav?.addEventListener("click", closeNav);
 elBackdrop?.addEventListener("click", closeNav);
 
