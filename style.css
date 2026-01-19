@@ -482,34 +482,48 @@ h1{
   .heroTop{ align-items:flex-start; }
   .heroLogo{ width: 68px; height: 68px; padding: 7px; }
 
-  /* buscador + toggle en una línea */
+  /* Buscador + toggle en 1 línea, RRSS abajo */
   .controls{
-    grid-template-columns: 1fr auto;
+    grid-template-columns: minmax(0,1fr) max-content;
     grid-template-areas:
-      "search toggle"
-      ".      social";
-    gap: unset;
-    column-gap: 4px;
+      "search actions"
+      "social social";
+    column-gap: 2px;   /* <-- casi juntos */
     row-gap: 8px;
     align-items:center;
   }
 
   #buscador{
+    height: 42px;
+    padding: 0 10px;
+    width: 100%;
     min-width: 0;
   }
 
+  /* Clave: el toggle NO puede ser gigante */
+  .rightActions{ justify-content:flex-end; }
+
   .chip{
-    padding: 0 2px;
-    height: 40px;
-    font-size: 12px;
+    height: 42px;
+    padding: 0 8px;        /* <-- reduce ancho */
+    font-size: 11px;       /* <-- reduce ancho */
+    gap: 6px;
+    max-width: 44vw;       /* <-- evita que se coma el buscador */
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
-  .chipToggle{
-    max-width: 180px;
+  /* Reduce el tamaño visual del checkbox dentro del chip */
+  .chip input{
+    width: 16px;
+    height: 16px;
   }
 
   /* RRSS abajo */
   .headerSocial{
+    justify-self: center;
+    justify-content: center;
     gap: 8px;
   }
   .hsLink{
@@ -518,3 +532,4 @@ h1{
   }
   .hsIcon{ width: 13px; height: 13px; }
 }
+
