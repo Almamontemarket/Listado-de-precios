@@ -145,8 +145,8 @@ body::after{
 
 /* logo circular real, sin borde */
 .heroLogo{
-  width: 96px;
-  height: 96px;
+  width: 104px;
+  height: 104px;
   display:block;
   object-fit: contain;      /* evita cortes raros del logo */
   border-radius: 999px;
