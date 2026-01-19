@@ -1,16 +1,37 @@
+```html
 <!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Lista de precios</title>
+  <title>AlmaMontemarket · Lista de precios</title>
+
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
 
 <body>
+  <!-- Botón “hamburguesa” para abrir categorías -->
+  <button id="menuBtn" class="menuBtn" type="button" aria-label="Abrir categorías" aria-controls="sidenav" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+
+  <!-- Fondo oscuro cuando el panel está abierto -->
+  <div id="backdrop" class="backdrop" hidden></div>
+
   <header class="hero">
     <div class="hero__inner">
+      <!-- Marca + logo -->
+      <div class="brandbar">
+        <img
+          class="brandbar__logo"
+          src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSIW-Eg85i3Ix3x0uml30W_t2d3AQ3Omi1ifg&s"
+          alt="AlmaMontemarket"
+          loading="eager"
+        />
+        <div class="brandbar__name">AlmaMontemarket</div>
+      </div>
+
       <h1>Lista de precios</h1>
       <p class="sub">Actualizado automáticamente desde Google Sheets</p>
 
@@ -29,19 +50,26 @@
     </div>
   </header>
 
-  <aside class="sidenav" id="sidenav">
-  <div class="sidenav__handle">Categorías</div>
+  <!-- Panel lateral: SOLO categorías (para filtrar 1 o más) -->
+  <aside class="sidenav" id="sidenav" aria-hidden="true">
+    <div class="sidenav__body">
+      <div class="sidenav__top">
+        <div class="sidenav__title">Categorías</div>
+        <button id="closeNav" class="sidenav__close" type="button" aria-label="Cerrar categorías">✕</button>
+      </div>
 
-  <div class="sidenav__body">
-    <div class="sidenav__top">
-      <div class="sidenav__title">Categorías</div>
-      <input id="navSearch" type="search" placeholder="Buscar en categorías..." autocomplete="off" />
+      <input id="navSearch" type="search" placeholder="Buscar categorías..." autocomplete="off" />
+
+      <!-- Aquí se renderizan categorías como checklist -->
+      <nav id="navCats" class="navcats"></nav>
+
+      <!-- (Opcional) Si después quieres botones rápidos -->
+      <!-- <div class="sidenav__actions">
+        <button id="selectAll" type="button">Seleccionar todas</button>
+        <button id="clearAll" type="button">Limpiar</button>
+      </div> -->
     </div>
-
-    <nav id="navCats" class="navcats"></nav>
-  </div>
-</aside>
-
+  </aside>
 
   <main class="wrap">
     <div id="contenedor" class="menu"></div>
@@ -54,3 +82,4 @@
   <script src="app.js"></script>
 </body>
 </html>
+```
