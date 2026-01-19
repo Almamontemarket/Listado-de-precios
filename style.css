@@ -486,7 +486,7 @@ h1{
     grid-template-areas:
       "search toggle"
       ".      social";
-    gap: 8px;
+    gap: 2px;
     align-items:center;
   }
 
