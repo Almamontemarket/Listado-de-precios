@@ -141,8 +141,8 @@ body::after{
 
 /* ===== Logo sin encasillar ===== */
 .heroLogo{
-  width: 240px;          /* tamaño del logo */
-  height: 64px;          /* alto alineado al texto */
+  width: 320px;          /* tamaño del logo */
+  height: 96px;          /* alto alineado al texto */
   object-fit: contain;
   border: 0;
   border-radius: 0;
