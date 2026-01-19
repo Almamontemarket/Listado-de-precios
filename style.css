@@ -9,7 +9,7 @@
 
   /* Fondo general (dejas el actual, sin imagen) */
   /* Imagen header (difuminada) */
-  --heroimg: url("https://d2hupxtdp76yrt.cloudfront.net/uploads/frutas-y-verduras-que-no-pueden-faltar-en-tu-cesta-de-la-compra.jpg");
+  --heroimg: url(https://d2hupxtdp76yrt.cloudfront.net/uploads/frutas-y-verduras-que-no-pueden-faltar-en-tu-cesta-de-la-compra.jpg);
 }
 
 *{box-sizing:border-box}
