@@ -139,14 +139,22 @@ body::after{
   display:flex;
   align-items:center;
   justify-content:flex-end;
+  margin-left: auto;      /* empuja a la derecha */
 }
+
 
 /* ===== Logo sin encasillar ===== */
 .heroLogo{
-  width: 420px;
-  height: 130px;
-  object-fit: contain;
+  width: 84px;
+  height: 84px;
+  object-fit: cover;
+  border: 0;
+  border-radius: 999px;   /* circular */
   background: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+
 }
 
 
@@ -178,6 +186,41 @@ h1{
   margin-top: 12px;
 }
 
+.rightActions{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:10px;
+  flex: 0 0 auto;
+}
+
+.headerSocial{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+
+.hsLink{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  text-decoration:none;
+  color: rgba(15,23,42,.78);
+  font-size: 12px;
+  padding: 8px 10px;
+  border: 1px solid rgba(15,23,42,.10);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.85);
+}
+
+.hsIcon{
+  width: 14px;
+  height: 14px;
+  opacity:.75;
+}
+
+
 #buscador{
   flex:1 1 280px;
   padding:12px 12px;
@@ -200,6 +243,11 @@ h1{
   font-size:13px;
   user-select:none;
 }
+
+.chipToggle{
+  align-self:flex-end;
+}
+
 
 .meta{
   margin-top:10px;
