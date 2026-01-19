@@ -180,7 +180,9 @@ h1{
   grid-template-areas:
     "search toggle"
     ".      social";
-  gap: 10px;
+  gap: unset;
+  colum-gap: 6px;
+  row-gap: 8px;
   align-items: center;
   margin-top: 10px;
 }
@@ -497,7 +499,7 @@ h1{
   }
 
   .chip{
-    padding: 0 8px;
+    padding: 0 2px;
     height: 40px;
     font-size: 12px;
   }
