@@ -6,26 +6,19 @@ const elToggleNo = document.getElementById("toggleNoStock");
 const elCount = document.getElementById("count");
 const elUpdated = document.getElementById("updated");
 
-let elNavCats = document.getElementById("navCats");
-let elNavSearch = document.getElementById("navSearch");
+const elNavCats = document.getElementById("navCats");
+const elNavSearch = document.getElementById("navSearch");
+
+const elMenuBtn = document.getElementById("menuBtn");
+const elSidenav = document.getElementById("sidenav");
+const elBackdrop = document.getElementById("backdrop");
+const elCloseNav = document.getElementById("closeNav");
 
 let RAW = [];
+let selectedCats = new Set();
 
-/* =========================
-   Helpers
-========================= */
 function normText(s){
   return (s ?? "").toString().trim();
-}
-
-/* Quita tildes, baja a minúsculas: mani == maní */
-function fold(str){
-  return (str ?? "")
-    .toString()
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
 }
 
 function normDisponibilidad(s){
@@ -68,169 +61,91 @@ function slugify(str){
 }
 
 /* =========================
-   Drawer / Hamburguesa
-   (auto-crea markup si no existe)
+   Drawer open/close/toggle
 ========================= */
-function ensureSideNav(){
-  // Si ya existen en el HTML, no hacemos nada
-  let menuBtn = document.querySelector(".menuBtn");
-  let sidenav = document.querySelector(".sidenav");
-  let backdrop = document.querySelector(".backdrop");
+function isNavOpen(){
+  return !!elSidenav?.classList.contains("is-open");
+}
 
-  // Crear botón hamburguesa si no existe
-  if (!menuBtn){
-    menuBtn = document.createElement("button");
-    menuBtn.className = "menuBtn";
-    menuBtn.type = "button";
-    menuBtn.setAttribute("aria-label", "Abrir categorías");
-    menuBtn.innerHTML = `<span></span><span></span><span></span>`;
-    document.body.appendChild(menuBtn);
-  }
+function openNav(){
+  if (!elSidenav) return;
+  elSidenav.classList.add("is-open");
+  elSidenav.setAttribute("aria-hidden", "false");
+  if (elBackdrop) elBackdrop.hidden = false;
+  if (elMenuBtn) elMenuBtn.setAttribute("aria-expanded", "true");
+}
 
-  // Crear backdrop si no existe
-  if (!backdrop){
-    backdrop = document.createElement("div");
-    backdrop.className = "backdrop";
-    backdrop.style.display = "none";
-    document.body.appendChild(backdrop);
-  }
+function closeNav(){
+  if (!elSidenav) return;
+  elSidenav.classList.remove("is-open");
+  elSidenav.setAttribute("aria-hidden", "true");
+  if (elBackdrop) elBackdrop.hidden = true;
+  if (elMenuBtn) elMenuBtn.setAttribute("aria-expanded", "false");
+}
 
-  // Crear sidenav si no existe
-  if (!sidenav){
-    sidenav = document.createElement("aside");
-    sidenav.className = "sidenav";
-    sidenav.innerHTML = `
-      <div class="sidenav__body">
-        <div class="sidenav__top">
-          <div class="sidenav__title">Categorías</div>
-          <button class="sidenav__close" type="button" aria-label="Cerrar">✕</button>
-        </div>
-        <input id="navSearch" type="search" placeholder="Buscar categoría o producto..." autocomplete="off" />
-        <div id="navCats" class="navcats"></div>
-      </div>
-    `;
-    document.body.appendChild(sidenav);
-  }
-
-  // Actualizar refs (por si los creamos)
-  elNavCats = document.getElementById("navCats");
-  elNavSearch = document.getElementById("navSearch");
-
-  const closeBtn = sidenav.querySelector(".sidenav__close");
-
-  function openNav(){
-    sidenav.classList.add("is-open");
-    backdrop.style.display = "";
-  }
-  function closeNav(){
-    sidenav.classList.remove("is-open");
-    backdrop.style.display = "none";
-  }
-
-  menuBtn.addEventListener("click", () => {
-    if (sidenav.classList.contains("is-open")) closeNav();
-    else openNav();
-  });
-
-  backdrop.addEventListener("click", closeNav);
-  closeBtn?.addEventListener("click", closeNav);
-
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeNav();
-  });
-
-  // listener del buscador del drawer
-  elNavSearch?.addEventListener("input", filterSideNav);
+function toggleNav(){
+  if (isNavOpen()) closeNav();
+  else openNav();
 }
 
 /* =========================
-   SideNav (categorías/productos)
+   Side nav (SOLO categorías)
 ========================= */
-function buildSideNav(grouped){
+function buildSideNavFromRows(rowsForNav){
   if (!elNavCats) return;
+
+  const grouped = groupByCategoria(rowsForNav);
   elNavCats.innerHTML = "";
 
   for (const [cat, items] of grouped){
-    const catId = "cat-" + slugify(cat);
+    const id = "catcheck-" + slugify(cat);
 
-    const box = document.createElement("div");
-    box.className = "navcat";
-    box.dataset.cat = fold(cat);
+    const row = document.createElement("label");
+    row.className = "navcat";
+    row.dataset.cat = cat.toLowerCase();
 
-    const head = document.createElement("div");
-    head.className = "navcat__head";
-    head.addEventListener("click", () => {
-      box.classList.toggle("is-open");
-      const sec = document.getElementById(catId);
-      if (sec) sec.scrollIntoView({ behavior:"smooth", block:"start" });
+    const left = document.createElement("div");
+    left.className = "navcat__left";
+
+    const chk = document.createElement("input");
+    chk.type = "checkbox";
+    chk.className = "navcat__check";
+    chk.id = id;
+    chk.checked = selectedCats.has(cat);
+
+    chk.addEventListener("change", () => {
+      if (chk.checked) selectedCats.add(cat);
+      else selectedCats.delete(cat);
+      render();
     });
 
     const name = document.createElement("div");
     name.className = "navcat__name";
     name.textContent = cat;
 
+    left.appendChild(chk);
+    left.appendChild(name);
+
     const count = document.createElement("div");
     count.className = "navcat__count";
     count.textContent = items.length;
 
-    head.appendChild(name);
-    head.appendChild(count);
+    row.appendChild(left);
+    row.appendChild(count);
 
-    const list = document.createElement("div");
-    list.className = "navcat__list";
-
-    for (const it of items){
-      const row = document.createElement("div");
-      row.className = "navitem";
-      row.dataset.prod = it.producto_fold || fold(it.producto);
-
-      row.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const target = document.getElementById(it._id);
-        if (target) target.scrollIntoView({ behavior:"smooth", block:"center" });
-      });
-
-      const p = document.createElement("div");
-      p.className = "navitem__p";
-      p.textContent = it.producto;
-
-      const pr = document.createElement("div");
-      pr.className = "navitem__price";
-      pr.textContent = Number.isFinite(it.precio_num) ? `$ ${formatoCLP(it.precio_num)}` : "";
-
-      row.appendChild(p);
-      row.appendChild(pr);
-      list.appendChild(row);
-    }
-
-    box.appendChild(head);
-    box.appendChild(list);
-    elNavCats.appendChild(box);
+    elNavCats.appendChild(row);
   }
 }
 
 function filterSideNav(){
   if (!elNavCats || !elNavSearch) return;
 
-  const q = fold(elNavSearch.value);
+  const q = normText(elNavSearch.value).toLowerCase();
   const cats = elNavCats.querySelectorAll(".navcat");
 
   for (const c of cats){
     const catName = c.dataset.cat || "";
-    const items = c.querySelectorAll(".navitem");
-
-    let anyItem = false;
-    for (const it of items){
-      const ok = !q || catName.includes(q) || (it.dataset.prod || "").includes(q);
-      it.style.display = ok ? "" : "none";
-      if (ok) anyItem = true;
-    }
-
-    const catOk = !q || catName.includes(q) || anyItem;
-    c.style.display = catOk ? "" : "none";
-
-    if (q && catOk) c.classList.add("is-open");
-    if (!q) c.classList.remove("is-open");
+    c.style.display = (!q || catName.includes(q)) ? "" : "none";
   }
 }
 
@@ -238,18 +153,22 @@ function filterSideNav(){
    Render principal
 ========================= */
 function render(){
-  const q = fold(elBuscador?.value);
+  const q = normText(elBuscador?.value).toLowerCase();
   const showNo = !!elToggleNo?.checked;
 
   let rows = RAW
     .filter(r => r.categoria && r.producto)
     .filter(r => showNo ? true : r.disponibilidad !== "NO")
-    .filter(r => !q ? true : (r.producto_fold.includes(q)));
+    .filter(r => !q ? true : (r.producto.toLowerCase().includes(q)));
+
+  if (selectedCats.size > 0){
+    rows = rows.filter(r => selectedCats.has(r.categoria));
+  }
 
   const grouped = groupByCategoria(rows);
-
   const totalItems = rows.length;
   const totalCats = grouped.length;
+
   if (elCount) elCount.textContent = `${totalCats} categorías · ${totalItems} productos`;
 
   elContenedor.innerHTML = "";
@@ -258,20 +177,22 @@ function render(){
     elContenedor.innerHTML =
       `<div class="section">
         <div class="section__head"><h3 class="section__title">Sin resultados</h3></div>
-        <div style="padding:16px;color:var(--muted)">Prueba con otra búsqueda o muestra NO disponibles.</div>
+        <div style="padding:16px;color:var(--muted)">Prueba con otra búsqueda, cambia categorías o muestra NO disponibles.</div>
       </div>`;
-    if (elNavCats) elNavCats.innerHTML = "";
+
+    const rowsForNav = RAW
+      .filter(r => r.categoria && r.producto)
+      .filter(r => showNo ? true : r.disponibilidad !== "NO");
+    buildSideNavFromRows(rowsForNav);
+    filterSideNav();
     return;
   }
 
   for (const [cat, items] of grouped){
     items.sort((a,b)=>a.producto.localeCompare(b.producto, "es"));
 
-    const catId = "cat-" + slugify(cat);
-
     const section = document.createElement("section");
     section.className = "section";
-    section.id = catId;
 
     const head = document.createElement("div");
     head.className = "section__head";
@@ -291,12 +212,8 @@ function render(){
     grid.className = "grid";
 
     for (const it of items){
-      const baseId = "p-" + slugify(cat) + "-" + slugify(it.producto);
-      it._id = baseId + "-" + Math.random().toString(16).slice(2,6);
-
       const card = document.createElement("div");
       card.className = "item" + (it.disponibilidad === "NO" ? " muted" : "");
-      card.id = it._id;
 
       const top = document.createElement("div");
       top.className = "item__top";
@@ -333,12 +250,16 @@ function render(){
     elContenedor.appendChild(section);
   }
 
-  buildSideNav(grouped);
+  const rowsForNav = RAW
+    .filter(r => r.categoria && r.producto)
+    .filter(r => showNo ? true : r.disponibilidad !== "NO");
+
+  buildSideNavFromRows(rowsForNav);
   filterSideNav();
 }
 
 /* =========================
-   Load CSV
+   Load
 ========================= */
 async function load(){
   const res = await fetch(CSV_URL, { cache: "no-store" });
@@ -350,23 +271,14 @@ async function load(){
     complete: (results) => {
       const data = results.data || [];
 
-      RAW = data.map(r => {
-        const producto = normText(r.producto);
-        const categoria = normText(r.categoria);
-
-        return {
-          categoria,
-          producto,
-          unidad: normText(r.unidad),
-          precio_raw: r.precio,
-          precio_num: parsePrecio(r.precio),
-          disponibilidad: normDisponibilidad(r.disponibilidad),
-
-          // claves normalizadas para búsqueda inteligente
-          producto_fold: fold(producto),
-          categoria_fold: fold(categoria),
-        };
-      });
+      RAW = data.map(r => ({
+        categoria: normText(r.categoria),
+        producto: normText(r.producto),
+        unidad: normText(r.unidad),
+        precio_raw: r.precio,
+        precio_num: parsePrecio(r.precio),
+        disponibilidad: normDisponibilidad(r.disponibilidad),
+      }));
 
       const now = new Date();
       if (elUpdated) elUpdated.textContent = `Última carga: ${now.toLocaleString("es-CL")}`;
@@ -384,11 +296,18 @@ async function load(){
 }
 
 /* =========================
-   Init
+   Events
 ========================= */
-ensureSideNav();
-
 elBuscador?.addEventListener("input", render);
 elToggleNo?.addEventListener("change", render);
+elNavSearch?.addEventListener("input", filterSideNav);
+
+elMenuBtn?.addEventListener("click", toggleNav);  // AHORA abre/cierra
+elCloseNav?.addEventListener("click", closeNav);
+elBackdrop?.addEventListener("click", closeNav);
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeNav();
+});
 
 load();
