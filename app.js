@@ -6,17 +6,26 @@ const elToggleNo = document.getElementById("toggleNoStock");
 const elCount = document.getElementById("count");
 const elUpdated = document.getElementById("updated");
 
-const elNavCats = document.getElementById("navCats");
-const elNavSearch = document.getElementById("navSearch");
+let elNavCats = document.getElementById("navCats");
+let elNavSearch = document.getElementById("navSearch");
 
 let RAW = [];
 
-// ====== NUEVO: filtro de categorías (drawer) ======
-let ALL_CATS = [];              // array de keys (lowercase)
-let selectedCats = new Set();   // keys seleccionadas
-
+/* =========================
+   Helpers
+========================= */
 function normText(s){
   return (s ?? "").toString().trim();
+}
+
+/* Quita tildes, baja a minúsculas: mani == maní */
+function fold(str){
+  return (str ?? "")
+    .toString()
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
 }
 
 function normDisponibilidad(s){
@@ -58,91 +67,95 @@ function slugify(str){
     .replace(/(^-|-$)/g,"");
 }
 
-// key estable para comparar categorías
-function catKey(cat){
-  return normText(cat).toLowerCase();
-}
+/* =========================
+   Drawer / Hamburguesa
+   (auto-crea markup si no existe)
+========================= */
+function ensureSideNav(){
+  // Si ya existen en el HTML, no hacemos nada
+  let menuBtn = document.querySelector(".menuBtn");
+  let sidenav = document.querySelector(".sidenav");
+  let backdrop = document.querySelector(".backdrop");
 
-function setAllCatsFromRaw(){
-  const set = new Set();
-  for (const r of RAW){
-    if (r.categoria) set.add(catKey(r.categoria));
+  // Crear botón hamburguesa si no existe
+  if (!menuBtn){
+    menuBtn = document.createElement("button");
+    menuBtn.className = "menuBtn";
+    menuBtn.type = "button";
+    menuBtn.setAttribute("aria-label", "Abrir categorías");
+    menuBtn.innerHTML = `<span></span><span></span><span></span>`;
+    document.body.appendChild(menuBtn);
   }
-  ALL_CATS = [...set].sort((a,b)=>a.localeCompare(b, "es"));
+
+  // Crear backdrop si no existe
+  if (!backdrop){
+    backdrop = document.createElement("div");
+    backdrop.className = "backdrop";
+    backdrop.style.display = "none";
+    document.body.appendChild(backdrop);
+  }
+
+  // Crear sidenav si no existe
+  if (!sidenav){
+    sidenav = document.createElement("aside");
+    sidenav.className = "sidenav";
+    sidenav.innerHTML = `
+      <div class="sidenav__body">
+        <div class="sidenav__top">
+          <div class="sidenav__title">Categorías</div>
+          <button class="sidenav__close" type="button" aria-label="Cerrar">✕</button>
+        </div>
+        <input id="navSearch" type="search" placeholder="Buscar categoría o producto..." autocomplete="off" />
+        <div id="navCats" class="navcats"></div>
+      </div>
+    `;
+    document.body.appendChild(sidenav);
+  }
+
+  // Actualizar refs (por si los creamos)
+  elNavCats = document.getElementById("navCats");
+  elNavSearch = document.getElementById("navSearch");
+
+  const closeBtn = sidenav.querySelector(".sidenav__close");
+
+  function openNav(){
+    sidenav.classList.add("is-open");
+    backdrop.style.display = "";
+  }
+  function closeNav(){
+    sidenav.classList.remove("is-open");
+    backdrop.style.display = "none";
+  }
+
+  menuBtn.addEventListener("click", () => {
+    if (sidenav.classList.contains("is-open")) closeNav();
+    else openNav();
+  });
+
+  backdrop.addEventListener("click", closeNav);
+  closeBtn?.addEventListener("click", closeNav);
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeNav();
+  });
+
+  // listener del buscador del drawer
+  elNavSearch?.addEventListener("input", filterSideNav);
 }
 
-function selectAllCats(){
-  selectedCats = new Set(ALL_CATS);
-}
-
-function updateAllCheckboxState(){
-  const allBox = document.getElementById("navAll");
-  if (!allBox) return;
-
-  const selCount = selectedCats.size;
-  const total = ALL_CATS.length;
-
-  // checked si todas
-  allBox.checked = (selCount === total);
-
-  // indeterminate si algunas
-  allBox.indeterminate = (selCount > 0 && selCount < total);
-}
-
-// ====== Drawer (categorías + ALL) ======
+/* =========================
+   SideNav (categorías/productos)
+========================= */
 function buildSideNav(grouped){
   if (!elNavCats) return;
   elNavCats.innerHTML = "";
 
-  // ----- fila ALL -----
-  const allRow = document.createElement("div");
-  allRow.className = "navall";
-
-  const allLeft = document.createElement("div");
-  allLeft.className = "navall__left";
-
-  const allCb = document.createElement("input");
-  allCb.type = "checkbox";
-  allCb.id = "navAll";
-  allCb.className = "navall__check";
-
-  const allLbl = document.createElement("label");
-  allLbl.htmlFor = "navAll";
-  allLbl.className = "navall__name";
-  allLbl.textContent = "ALL";
-
-  allLeft.appendChild(allCb);
-  allLeft.appendChild(allLbl);
-
-  const allRight = document.createElement("div");
-  allRight.className = "navall__hint";
-  allRight.textContent = "Mostrar todo";
-
-  allRow.appendChild(allLeft);
-  allRow.appendChild(allRight);
-
-  elNavCats.appendChild(allRow);
-
-  // comportamiento ALL
-  allCb.addEventListener("change", () => {
-    if (allCb.checked){
-      selectAllCats();
-    } else {
-      // si desmarca ALL, dejamos TODO desmarcado (no muestra nada) -> más lógico en UI.
-      selectedCats.clear();
-    }
-    updateAllCheckboxState();
-    render();
-  });
-
-  // ----- categorías -----
   for (const [cat, items] of grouped){
     const catId = "cat-" + slugify(cat);
-    const key = catKey(cat);
 
     const box = document.createElement("div");
     box.className = "navcat";
-    box.dataset.cat = key;
+    box.dataset.cat = fold(cat);
 
     const head = document.createElement("div");
     head.className = "navcat__head";
@@ -152,36 +165,15 @@ function buildSideNav(grouped){
       if (sec) sec.scrollIntoView({ behavior:"smooth", block:"start" });
     });
 
-    const left = document.createElement("div");
-    left.className = "navcat__left";
-
-    const check = document.createElement("input");
-    check.type = "checkbox";
-    check.className = "navcat__check";
-    check.checked = selectedCats.has(key);
-
-    // importantísimo: que no dispare el toggle de abrir/cerrar
-    check.addEventListener("click", (e) => e.stopPropagation());
-    check.addEventListener("change", () => {
-      if (check.checked) selectedCats.add(key);
-      else selectedCats.delete(key);
-
-      updateAllCheckboxState();
-      render();
-    });
-
     const name = document.createElement("div");
     name.className = "navcat__name";
     name.textContent = cat;
-
-    left.appendChild(check);
-    left.appendChild(name);
 
     const count = document.createElement("div");
     count.className = "navcat__count";
     count.textContent = items.length;
 
-    head.appendChild(left);
+    head.appendChild(name);
     head.appendChild(count);
 
     const list = document.createElement("div");
@@ -190,7 +182,7 @@ function buildSideNav(grouped){
     for (const it of items){
       const row = document.createElement("div");
       row.className = "navitem";
-      row.dataset.prod = (it.producto || "").toLowerCase();
+      row.dataset.prod = it.producto_fold || fold(it.producto);
 
       row.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -215,14 +207,12 @@ function buildSideNav(grouped){
     box.appendChild(list);
     elNavCats.appendChild(box);
   }
-
-  updateAllCheckboxState();
 }
 
 function filterSideNav(){
   if (!elNavCats || !elNavSearch) return;
 
-  const q = normText(elNavSearch.value).toLowerCase();
+  const q = fold(elNavSearch.value);
   const cats = elNavCats.querySelectorAll(".navcat");
 
   for (const c of cats){
@@ -244,23 +234,17 @@ function filterSideNav(){
   }
 }
 
-// ====== Render principal ======
+/* =========================
+   Render principal
+========================= */
 function render(){
-  const q = normText(elBuscador?.value).toLowerCase();
+  const q = fold(elBuscador?.value);
   const showNo = !!elToggleNo?.checked;
 
   let rows = RAW
     .filter(r => r.categoria && r.producto)
     .filter(r => showNo ? true : r.disponibilidad !== "NO")
-    .filter(r => !q ? true : (r.producto.toLowerCase().includes(q)));
-
-  // NUEVO: filtro por categorías seleccionadas
-  // Si selectedCats está vacío -> no mostrar nada (coherente con ALL desmarcado)
-  if (selectedCats.size > 0){
-    rows = rows.filter(r => selectedCats.has(catKey(r.categoria)));
-  } else {
-    rows = [];
-  }
+    .filter(r => !q ? true : (r.producto_fold.includes(q)));
 
   const grouped = groupByCategoria(rows);
 
@@ -274,30 +258,23 @@ function render(){
     elContenedor.innerHTML =
       `<div class="section">
         <div class="section__head"><h3 class="section__title">Sin resultados</h3></div>
-        <div style="padding:16px;color:var(--muted)">Prueba con otra búsqueda, muestra NO disponibles o marca ALL en categorías.</div>
+        <div style="padding:16px;color:var(--muted)">Prueba con otra búsqueda o muestra NO disponibles.</div>
       </div>`;
-
-    // aunque no haya resultados, el drawer se arma desde RAW (no desde rows)
-    const groupedAll = groupByCategoria(RAW.filter(r => r.categoria && r.producto));
-    buildSideNav(groupedAll);
-    filterSideNav();
+    if (elNavCats) elNavCats.innerHTML = "";
     return;
   }
 
-  // render de secciones (colapsables)
   for (const [cat, items] of grouped){
     items.sort((a,b)=>a.producto.localeCompare(b.producto, "es"));
+
     const catId = "cat-" + slugify(cat);
 
     const section = document.createElement("section");
-    section.className = "section is-collapsed"; // <-- por defecto “achicada”
+    section.className = "section";
     section.id = catId;
 
     const head = document.createElement("div");
-    head.className = "section__head section__head--collapsible";
-    head.addEventListener("click", () => {
-      section.classList.toggle("is-collapsed");
-    });
+    head.className = "section__head";
 
     const title = document.createElement("h3");
     title.className = "section__title";
@@ -307,13 +284,8 @@ function render(){
     badge.className = "badge";
     badge.textContent = `${items.length}`;
 
-    const chev = document.createElement("span");
-    chev.className = "secChevron";
-    chev.setAttribute("aria-hidden", "true");
-
     head.appendChild(title);
     head.appendChild(badge);
-    head.appendChild(chev);
 
     const grid = document.createElement("div");
     grid.className = "grid";
@@ -340,17 +312,18 @@ function render(){
       unit.textContent = it.unidad ? it.unidad : "";
 
       left.appendChild(name);
-      left.appendChild(unit);
+      if (it.unidad) left.appendChild(unit);
 
       const price = document.createElement("div");
       price.className = "item__price";
-      price.innerHTML = Number.isFinite(it.precio_num)
-        ? `$ ${formatoCLP(it.precio_num)} <small>CLP</small>`
-        : `-`;
+      if (Number.isFinite(it.precio_num)){
+        price.innerHTML = `$ ${formatoCLP(it.precio_num)} <small>CLP</small>`;
+      } else {
+        price.textContent = normText(it.precio_raw) || "-";
+      }
 
       top.appendChild(left);
       top.appendChild(price);
-
       card.appendChild(top);
       grid.appendChild(card);
     }
@@ -360,58 +333,62 @@ function render(){
     elContenedor.appendChild(section);
   }
 
-  // drawer se arma desde RAW (para que siempre estén todas las categorías)
-  const groupedAll = groupByCategoria(RAW.filter(r => r.categoria && r.producto));
-  buildSideNav(groupedAll);
+  buildSideNav(grouped);
   filterSideNav();
 }
 
-// ====== Carga CSV ======
+/* =========================
+   Load CSV
+========================= */
 async function load(){
   const res = await fetch(CSV_URL, { cache: "no-store" });
-  const text = await res.text();
+  const csvText = await res.text();
 
-  // papa parse simple (sin lib) porque el CSV de Sheets es "normal"
-  // (si usas PapaParse, puedes reemplazar esto por Papa.parse)
-  const lines = text.split(/\r?\n/).filter(Boolean);
-  const headers = lines.shift().split(",").map(h => h.trim().toLowerCase());
+  Papa.parse(csvText, {
+    header: true,
+    skipEmptyLines: true,
+    complete: (results) => {
+      const data = results.data || [];
 
-  const idxCat = headers.indexOf("categoria");
-  const idxProd = headers.indexOf("producto");
-  const idxUni = headers.indexOf("unidad");
-  const idxPre = headers.indexOf("precio");
-  const idxDis = headers.indexOf("disponible");
+      RAW = data.map(r => {
+        const producto = normText(r.producto);
+        const categoria = normText(r.categoria);
 
-  RAW = lines.map(line => {
-    // split CSV simple; si tu CSV tiene comillas/commas internas, avísame y lo pasamos a PapaParse
-    const cols = line.split(",");
-    const categoria = normText(cols[idxCat]);
-    const producto = normText(cols[idxProd]);
-    const unidad = normText(cols[idxUni]);
-    const precio_num = parsePrecio(cols[idxPre]);
-    const disponibilidad = normDisponibilidad(cols[idxDis]);
+        return {
+          categoria,
+          producto,
+          unidad: normText(r.unidad),
+          precio_raw: r.precio,
+          precio_num: parsePrecio(r.precio),
+          disponibilidad: normDisponibilidad(r.disponibilidad),
 
-    return { categoria, producto, unidad, precio_num, disponibilidad };
+          // claves normalizadas para búsqueda inteligente
+          producto_fold: fold(producto),
+          categoria_fold: fold(categoria),
+        };
+      });
+
+      const now = new Date();
+      if (elUpdated) elUpdated.textContent = `Última carga: ${now.toLocaleString("es-CL")}`;
+
+      render();
+    },
+    error: () => {
+      elContenedor.innerHTML =
+        `<div class="section">
+          <div class="section__head"><h3 class="section__title">Error</h3></div>
+          <div style="padding:16px;color:var(--muted)">No se pudo leer el CSV.</div>
+        </div>`;
+    }
   });
-
-  // timestamp
-  if (elUpdated){
-    const now = new Date();
-    elUpdated.textContent = `Última carga: ${now.toLocaleString("es-CL")}`;
-  }
-
-  // init cats
-  setAllCatsFromRaw();
-  selectAllCats();          // <-- ALL por defecto seleccionado
-  render();
 }
 
-// ====== eventos ======
+/* =========================
+   Init
+========================= */
+ensureSideNav();
+
 elBuscador?.addEventListener("input", render);
 elToggleNo?.addEventListener("change", render);
-elNavSearch?.addEventListener("input", filterSideNav);
 
-load().catch(err => {
-  console.error(err);
-  elContenedor.innerHTML = `<div class="section"><div style="padding:16px">Error cargando datos.</div></div>`;
-});
+load();
